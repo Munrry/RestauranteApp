@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Auto-refresco automático cada 15 segundos -->
-    <meta http-equiv="refresh" content="15">
-    
-    <title>Pantalla de Cocina - Restaurante</title>
+    <title>Cocina - Restaurante App</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Auto-refresco de pantalla cada 15 segundos -->
+    <meta http-equiv="refresh" content="15">
 </head>
 <body class="bg-light">
 
-    <!-- Navbar Superior -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <!-- Navbar Superior de Cocina -->
+    <nav class="navbar navbar-dark bg-dark shadow-sm py-3">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="{% url 'lista_menu' %}">
-                <i class="fas fa-utensils me-2"></i>Restaurante App - Cocina
-            </a>
-            <a href="{% url 'lista_menu' %}" class="btn btn-outline-light btn-sm">
+            <a class="navbar-brand fw-bold" href="#"><i class="fas fa-utensils me-2"></i>Restaurante App - Cocina</a>
+            <a href="{% url 'lista_menu' %}" class="btn btn-outline-light btn-sm rounded-pill px-3 fw-bold">
                 <i class="fas fa-arrow-left me-1"></i> Volver al Menú
             </a>
         </div>
@@ -28,52 +24,58 @@
 
     <div class="container my-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="text-dark fw-bold mb-0">
-                <i class="fas fa-concierge-bell me-2 text-warning"></i>Pedidos Pendientes en Cocina
-            </h2>
-            <span class="badge bg-secondary">
-                <i class="fas fa-sync-alt fa-spin me-1"></i> Actualización automática (15s)
-            </span>
+            <h3 class="fw-bold text-dark"><i class="fas fa-concierge-bell text-warning me-2"></i>Pedidos Pendientes en Cocina</h3>
+            <div class="d-flex align-items-center gap-2">
+                <!-- Leyenda del Semáforo -->
+                <span class="badge bg-success px-2 py-1 small"><i class="fas fa-circle me-1"></i> &lt;10 min</span>
+                <span class="badge bg-warning text-dark px-2 py-1 small"><i class="fas fa-circle me-1"></i> 10-20 min</span>
+                <span class="badge bg-danger px-2 py-1 small"><i class="fas fa-circle me-1"></i> &gt;20 min</span>
+                <span class="badge bg-secondary rounded-pill px-3 py-2 ms-2"><i class="fas fa-sync-alt me-1"></i> (15s)</span>
+            </div>
         </div>
 
         <div class="row">
             {% for pedido in pedidos %}
-                <div class="col-md-6 col-lg-4 mb-3">
-                    <div class="card shadow-sm border-0 h-100">
-                        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-bold">Pedido #{{ pedido.id }}</h5>
-                            <span class="badge bg-dark fs-6">Mesa #{{ pedido.mesa.numero }}</span>
+                <div class="col-md-4 mb-3">
+                    <!-- Tarjeta con atributo data-fecha para la semaforización en vivo -->
+                    <div class="card shadow-sm border-0 rounded-3 tarjeta-pedido" data-fecha="{{ pedido.fecha_creacion|date:'c' }}">
+                        <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-2">
+                            <h6 class="mb-0 fw-bold text-warning">Pedido #{{ pedido.id }}</h6>
+                            <span class="badge bg-light text-dark fw-bold">Mesa #{{ pedido.mesa.numero }}</span>
                         </div>
-                        <div class="card-body">
-                            <!-- Información del Mesero, Tiempo Transcurrido y Estado -->
-                            <p class="mb-2 text-muted small">
-                                <i class="fas fa-user-tie me-1"></i> Mesero: <strong>{{ pedido.mesero.nombre }}</strong><br>
-                                <i class="fas fa-clock me-1 text-danger"></i> Recibido: <strong>hace {{ pedido.fecha_creacion|timesince }}</strong><br>
-                                <i class="fas fa-info-circle me-1"></i> Estado: <span class="badge bg-secondary">{{ pedido.get_estado_display }}</span>
+                        <div class="card-body bg-white">
+                            <p class="small text-muted mb-1"><i class="fas fa-user-tie me-1"></i> Mesero: <strong>{{ pedido.mesero.nombre }}</strong></p>
+                            <p class="small text-muted mb-2">
+                                <i class="fas fa-clock me-1"></i> Recibido: <span class="tiempo-transcurrido fw-bold">{{ pedido.fecha_creacion|timesince }} atrás</span>
                             </p>
-                            <hr>
-                            <h6 class="fw-bold text-secondary">Platos solicitados:</h6>
-                            <ul class="list-group list-group-flush mb-3">
+                            <p class="small text-muted mb-2"><i class="fas fa-info-circle me-1"></i> Estado: <span class="badge bg-secondary">{{ pedido.get_estado_display|default:pedido.estado }}</span></p>
+                            
+                            <hr class="my-2">
+                            <p class="fw-bold small text-dark mb-1">Platos solicitados:</p>
+                            <ul class="list-unstyled small mb-3">
                                 {% for detalle in pedido.detalles.all %}
-                                    <li class="list-group-item px-0 py-1 d-flex justify-content-between align-items-center">
-                                        <span><strong>{{ detalle.cantidad }}x</strong> {{ detalle.plato.nombre }}</span>
+                                    <li class="mb-1">
+                                        <span class="fw-bold text-primary">{{ detalle.cantidad }}x</span> {{ detalle.plato.nombre }}
                                         {% if detalle.observacion %}
-                                            <span class="badge bg-info text-dark" title="Observación">Nota: {{ detalle.observacion }}</span>
+                                            <br><small class="text-danger fst-italic">Nota: {{ detalle.observacion }}</small>
                                         {% endif %}
                                     </li>
                                 {% endfor %}
                             </ul>
 
-                            <!-- Acciones de Cocina -->
+                            <!-- Formulario para cambiar estado -->
                             <form method="POST">
                                 {% csrf_token %}
                                 <input type="hidden" name="pedido_id" value="{{ pedido.id }}">
+                                
                                 {% if pedido.estado == 'PENDIENTE' %}
-                                    <button type="submit" name="nuevo_estado" value="EN_PREPARACION" class="btn btn-warning w-100 fw-bold">
+                                    <input type="hidden" name="nuevo_estado" value="EN_PREPARACION">
+                                    <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold py-2 shadow-sm">
                                         <i class="fas fa-fire me-1"></i> Pasar a En Preparación
                                     </button>
                                 {% elif pedido.estado == 'EN_PREPARACION' %}
-                                    <button type="submit" name="nuevo_estado" value="LISTO" class="btn btn-success w-100 fw-bold text-white">
+                                    <input type="hidden" name="nuevo_estado" value="LISTO">
+                                    <button type="submit" class="btn btn-success btn-sm w-100 fw-bold py-2 shadow-sm">
                                         <i class="fas fa-check-circle me-1"></i> Marcar como Listo
                                     </button>
                                 {% endif %}
@@ -82,18 +84,92 @@
                     </div>
                 </div>
             {% empty %}
-                <div class="col-12">
-                    <div class="alert alert-info text-center py-5 shadow-sm">
-                        <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
-                        <h4>¡Todo al día!</h4>
-                        <p class="text-muted mb-0">No hay pedidos pendientes en este momento en la cocina.</p>
+                <div class="col-12 text-center py-5">
+                    <div class="card border-0 shadow-sm p-4 bg-white rounded-3">
+                        <i class="fas fa-check-circle text-success fa-3x mb-3"></i>
+                        <h5 class="fw-bold text-dark">¡Todo al día en la cocina!</h5>
+                        <p class="text-muted mb-0">No hay pedidos pendientes ni en preparación en este momento.</p>
                     </div>
                 </div>
             {% endfor %}
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- Script de Semaforización por Tiempo y Timbre de Cocina -->
+    <script>
+        function aplicarSemaforoTiempos() {
+            const tarjetas = document.querySelectorAll('.tarjeta-pedido');
+            const ahora = new Date();
+
+            tarjetas.forEach(tarjeta => {
+                const fechaStr = tarjeta.getAttribute('data-fecha');
+                if (!fechaStr) return;
+
+                const fechaCreacion = new Date(fechaStr);
+                const minutosTranscurridos = Math.floor((ahora - fechaCreacion) / 60000);
+
+                // Limpiar estilos anteriores de borde izquierdo
+                tarjeta.classList.remove('border-success', 'border-warning', 'border-danger');
+                
+                // Aplicar diseño de semáforo según el tiempo transcurrido
+                if (minutosTranscurridos < 10) {
+                    tarjeta.style.borderLeft = "6px solid #198754"; // 🟢 Verde (< 10 min)
+                } else if (minutosTranscurridos >= 10 && minutosTranscurridos <= 20) {
+                    tarjeta.style.borderLeft = "6px solid #ffc107"; // 🟡 Amarillo (10 - 20 min)
+                } else {
+                    tarjeta.style.borderLeft = "6px solid #dc3545"; // 🔴 Rojo (> 20 min - Retrasado)
+                    // Opcional: Agregar animación sutil de alerta si está muy retrasado
+                    tarjeta.style.boxShadow = "0 0 10px rgba(220, 53, 69, 0.4)";
+                }
+            });
+        }
+
+        // Ejecutar al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            aplicarSemaforoTiempos();
+            // Actualizar cada 10 segundos por si el pedido sigue abierto
+            setInterval(aplicarSemaforoTiempos, 10000);
+        });
+
+        // Audio sintético de timbre metálico de cocina con Web Audio API
+        function sonarTimbreCocina() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioContext();
+                const osc1 = audioCtx.createOscillator();
+                const osc2 = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(2400, audioCtx.currentTime);
+
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 1.2);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc1.start();
+                osc2.start();
+                osc1.stop(audioCtx.currentTime + 1.2);
+                osc2.stop(audioCtx.currentTime + 1.2);
+            } catch (e) {
+                console.log("Audio Web no permitido.");
+            }
+        }
+
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                sonarTimbreCocina();
+            });
+        });
+    </script>
+
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

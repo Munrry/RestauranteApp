@@ -1,9 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from .models import Categoria, Plato, Mesa, Pedido, DetallePedido, Mesero
-from django.db.models import Sum, Count, Q
+from django.db.models import Sum
+from categorias.models import Categoria
+from platos.models import Plato
+from mesas.models import Mesa
+from meseros.models import Mesero
+from detalles_pedido.models import DetallePedido
+from .models import Pedido
 
-# 1. Vista del Menú y Creación Rápida de Pedidos
+
+# 1. Vista del Menú y Creación / Acumulación de Pedidos por Mesa
 def lista_menu(request):
     categorias = Categoria.objects.prefetch_related('platos').all()
     mesas = Mesa.objects.all()
@@ -14,33 +20,30 @@ def lista_menu(request):
         mesero_id = request.POST.get('mesero_id')
         plato_id = request.POST.get('plato_id')
         cantidad = int(request.POST.get('cantidad', 1))
-        observacion = request.POST.get('observacion', '')
 
         mesa = get_object_or_404(Mesa, id=mesa_id)
         mesero = get_object_or_404(Mesero, id=mesero_id)
         plato = get_object_or_404(Plato, id=plato_id)
 
-        # Crear o buscar un pedido pendiente para esta mesa
+        # Buscar si la mesa ya tiene un pedido en estado PENDIENTE para acumularle más platos.
         pedido, creado = Pedido.objects.get_or_create(
             mesa=mesa,
             estado='PENDIENTE',
             defaults={'mesero': mesero}
         )
 
-        # Crear el detalle del pedido (Relación N:M)
+        # Crear el detalle del plato y asociarlo al pedido (Relación N:M)
         DetallePedido.objects.create(
             pedido=pedido,
             plato=plato,
-            cantidad=cantidad,
-            observacion=observacion,
-            precio_unitario=plato.precio
+            cantidad=cantidad
         )
 
         # Marcar la mesa como ocupada
         mesa.ocupada = True
         mesa.save()
 
-        messages.success(request, f"¡Pedido agregado correctamente a la Mesa #{mesa.numero}!")
+        messages.success(request, f'¡Plato "{plato.nombre}" agregado correctamente a la Mesa #{mesa.numero}!')
         return redirect('lista_menu')
 
     context = {
@@ -63,7 +66,7 @@ def vista_cocina(request):
         
     return render(request, 'pedidos/cocina.html', {'pedidos': pedidos_pendientes})
 
-# 3. Vista de Caja / Factura de Mesa
+# 3. Vista de Caja / Factura de Mesa (Suma todos los pedidos activos de la mesa)
 def detalle_cuenta(request, mesa_id):
     mesa = get_object_or_404(Mesa, id=mesa_id)
     pedidos_activos = Pedido.objects.filter(mesa=mesa).exclude(estado='PAGADO')
@@ -82,24 +85,19 @@ def detalle_cuenta(request, mesa_id):
     }
     return render(request, 'pedidos/cuenta.html', context)
 
-
 # 4. Vista de Dashboard / Estadísticas para el Administrador
 def dashboard(request):
-    # Calcular ingresos totales sumando los subtotales de los pedidos pagados
     pedidos_pagados = Pedido.objects.filter(estado='PAGADO')
     ingresos_totales = sum(p.total_pedido for p in pedidos_pagados)
 
-    # Platos más vendidos
     platos_populares = Plato.objects.annotate(
         total_vendido=Sum('detallepedido__cantidad')
     ).filter(total_vendido__gt=0).order_by('-total_vendido')[:5]
 
-    # Estado actual de las mesas
     total_mesas = Mesa.objects.count()
     mesas_ocupadas = Mesa.objects.filter(ocupada=True).count()
     mesas_disponibles = total_mesas - mesas_ocupadas
 
-    # Conteo de pedidos por estado
     pedidos_pendientes = Pedido.objects.filter(estado='PENDIENTE').count()
     pedidos_cocina = Pedido.objects.filter(estado='EN_PREPARACION').count()
 

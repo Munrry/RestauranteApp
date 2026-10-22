@@ -38,6 +38,13 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'pedidos',
+    # Nuestras apps del sistema de restaurante:
+    'categorias',
+    'platos',
+    'mesas',
+    'meseros',
+    'detalles_pedido',
+
 ]
 
 MIDDLEWARE = [
