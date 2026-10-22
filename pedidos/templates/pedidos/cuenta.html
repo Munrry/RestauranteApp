@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket - Mesa {{ mesa.numero }}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        
+        /* Estilo de ticket térmico/físico */
+        .ticket-receipt {
+            max-width: 380px;
+            margin: 30px auto;
+            background: #fff;
+            padding: 25px;
+            border: 1px dashed #666;
+            font-family: 'Courier New', Courier, monospace;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Configuración para impresión real (Oculta botones y menús al imprimir) */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .ticket-receipt, .ticket-receipt * {
+                visibility: visible;
+            }
+            .ticket-receipt {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                border: none;
+                box-shadow: none;
+                margin: 0;
+                padding: 5px;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container my-3 text-center no-print">
+        <a href="{% url 'lista_menu' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Volver al Menú
+        </a>
+    </div>
+
+    <!-- Contenedor del Ticket -->
+    <div class="ticket-receipt">
+        <div class="text-center mb-3">
+            <h4 class="fw-bold mb-0">🍽️ RESTAURANTE APP</h4>
+            <small class="text-muted">NIT: 900.123.456-7</small><br>
+            <small class="text-muted">Sistema de Gestión de Pedidos</small>
+            <hr class="my-2 border-dark">
+            <h5 class="fw-bold mb-1">FACTURA DE VENTA</h5>
+            <p class="mb-1 fs-5 fw-bold">Mesa #{{ mesa.numero }}</p>
+            <small class="text-muted">Fecha: {% now "d/m/Y H:i" %}</small>
+        </div>
+
+        <div class="border-top border-bottom border-dark py-2 my-2">
+            {% for pedido in pedidos_activos %}
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between small fw-bold">
+                        <span>Pedido #{{ pedido.id }}</span>
+                        <span>Mesero: {{ pedido.mesero.nombre }}</span>
+                    </div>
+                    <ul class="list-unstyled mb-0 ps-1">
+                        {% for detalle in pedido.detalles.all %}
+                            <li class="d-flex justify-content-between small py-1">
+                                <span>{{ detalle.cantidad }}x {{ detalle.plato.nombre }}</span>
+                                <span class="fw-bold">${{ detalle.subtotal }}</span>
+                            </li>
+                            {% if detalle.observacion %}
+                                <li class="text-muted small ps-2" style="font-size: 11px;">↳ Nota: {{ detalle.observacion }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% empty %}
+                <p class="text-center text-muted small my-3">No hay consumos pendientes en esta mesa.</p>
+            {% endfor %}
+        </div>
+
+        <div class="d-flex justify-content-between fw-bold fs-4 my-2">
+            <span>TOTAL:</span>
+            <span>${{ total_cuenta }}</span>
+        </div>
+        
+        <hr class="my-2 border-dark">
+        <div class="text-center small text-muted mb-3">
+            <p class="mb-1">¡Gracias por su preferencia!</p>
+            <p class="mb-0">Software Desarrollado con Django</p>
+        </div>
+
+        <!-- Botones de Acción (Se ocultan automáticamente al imprimir) -->
+        <div class="no-print mt-4">
+            {% if pedidos_activos %}
+                <button onclick="window.print()" class="btn btn-dark w-100 mb-2 fw-bold py-2 shadow-sm">
+                    <i class="fas fa-print me-1"></i> Imprimir Ticket
+                </button>
+                <form method="POST">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger w-100 fw-bold py-2 shadow-sm">
+                        <i class="fas fa-check-double me-1"></i> Registrar Pago y Cerrar Mesa
+                    </button>
+                </form>
+            {% else %}
+                <a href="{% url 'lista_menu' %}" class="btn btn-primary w-100 fw-bold py-2">Volver al Panel Principal</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

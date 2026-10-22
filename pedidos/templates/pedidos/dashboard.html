@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Administrador - Restaurante</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="{% url 'lista_menu' %}"><i class="fas fa-chart-line me-2"></i>Dashboard de Ventas</a>
+            <a href="{% url 'lista_menu' %}" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left me-1"></i> Volver al Menú</a>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <h2 class="fw-bold mb-4"><i class="fas fa-tachometer-alt me-2 text-primary"></i>Resumen General del Restaurante</h2>
+
+        <!-- Tarjetas Métricas -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-success text-white shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title text-white-50"><i class="fas fa-dollar-sign me-1"></i> Ingresos Totales</h6>
+                        <h3 class="fw-bold mb-0">${{ ingresos_totales }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title text-white-50"><i class="fas fa-chair me-1"></i> Mesas Ocupadas</h6>
+                        <h3 class="fw-bold mb-0">{{ mesas_ocupadas }} / {{ total_mesas }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-dark shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title text-muted"><i class="fas fa-clock me-1"></i> Pedidos Pendientes</h6>
+                        <h3 class="fw-bold mb-0">{{ pedidos_pendientes }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white shadow-sm border-0">
+                    <div class="card-body">
+                        <h6 class="card-title text-white-50"><i class="fas fa-fire me-1"></i> En Cocina</h6>
+                        <h3 class="fw-bold mb-0">{{ pedidos_cocina }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Platos Populares -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-dark text-white">
+                <h5 class="mb-0"><i class="fas fa-crown text-warning me-2"></i>Platos Más Vendidos</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Plato</th>
+                            <th>Categoría</th>
+                            <th>Precio Unitario</th>
+                            <th>Unidades Vendidas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plato in platos_populares %}
+                            <tr>
+                                <td><strong>{{ forloop.counter }}</strong></td>
+                                <td>{{ plato.nombre }}</td>
+                                <td><span class="badge bg-secondary">{{ plato.categoria.nombre }}</span></td>
+                                <td>${{ plato.precio }}</td>
+                                <td><span class="badge bg-success fs-6">{{ plato.total_vendido }}</span></td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-3 text-muted">Aún no hay suficiente historial de ventas. (Cobra algún pedido para ver datos aquí).</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
